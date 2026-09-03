@@ -1,0 +1,372 @@
+openapi: 3.0.3
+info:
+  title: CIS Users API
+  description: >
+    RESTful API for user management in the Collaborative Ideation Solution (CIS).
+    This API coexists with the Legacy CLI (repo-api-legacy) and shares the same MySQL database.
+    It is the authentication authority for the CIS API (repo-cis-api).
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+tags:
+  - name: Authentication
+    description: Login and token validation
+  - name: Users
+    description: User CRUD operations (requires authentication)
+
+paths:
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticates a user and returns a JWT token
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              login: "maria.s"
+              password: "password123"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/validate:
+    post:
+      tags:
+        - Authentication
+      summary: Validates a JWT token (consumed by the CIS API)
+      operationId: validateToken
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenValidationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users:
+    get:
+      tags:
+        - Users
+      summary: Lists all users
+      operationId: listUsers
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Users
+      summary: Creates a new user
+      operationId: createUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+            example:
+              name: "Maria Silva"
+              login: "maria.s"
+              password: "password123"
+      responses:
+        '201':
+          description: User created successfully
+          headers:
+            Location:
+              description: URL of the created user
+              schema:
+                type: string
+                example: /api/v1/users/550e8400-e29b-41d4-a716-446655440000
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: User UUID
+        schema:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    get:
+      tags:
+        - Users
+      summary: Gets a user by ID
+      operationId: getUserById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Users
+      summary: Updates a user
+      operationId: updateUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+            example:
+              name: "Maria Silva Updated"
+              password: "newPassword456"
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Users
+      summary: Deletes a user
+      operationId: deleteUser
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: User deleted successfully (no body)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Obtain a token via POST /auth/login.
+        Include it in all protected requests as:
+        Authorization: Bearer <token>
+
+  schemas:
+
+    LoginRequest:
+      type: object
+      required:
+        - login
+        - password
+      properties:
+        login:
+          type: string
+          minLength: 3
+          maxLength: 20
+          example: "maria.s"
+        password:
+          type: string
+          minLength: 6
+          example: "password123"
+
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Signed JWT token - include in the Authorization header
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    TokenValidationResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        login:
+          type: string
+          example: "maria.s"
+
+    CreateUserRequest:
+      type: object
+      required:
+        - name
+        - login
+        - password
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 200
+          example: "Maria Silva"
+        login:
+          type: string
+          minLength: 3
+          maxLength: 20
+          description: Unique login identifier - must be unique across the system
+          example: "maria.s"
+        password:
+          type: string
+          minLength: 6
+          maxLength: 100
+          description: Plain text password - stored as a BCrypt hash
+          example: "password123"
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 200
+          example: "Maria Silva Updated"
+        password:
+          type: string
+          minLength: 6
+          maxLength: 100
+          description: New password (will be re-hashed) - omit to keep current
+          example: "newPassword456"
+
+    UserResponse:
+      type: object
+      description: Safe user representation. The password field is NEVER returned.
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          example: "Maria Silva"
+        login:
+          type: string
+          example: "maria.s"
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "User not found"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
+
+  responses:
+
+    BadRequest:
+      description: Malformed request body or missing required fields
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Invalid request format"
+            timestamp: "2025-01-15T10:30:00Z"
+
+    Unauthorized:
+      description: JWT token missing, expired or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Invalid credentials"
+            timestamp: "2025-01-15T10:30:00Z"
+
+    NotFound:
+      description: Requested resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "User not found"
+            timestamp: "2025-01-15T10:30:00Z"
+
+    Conflict:
+      description: Resource already exists - e.g. duplicate login
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Login is already in use"
+            timestamp: "2025-01-15T10:30:00Z"
+
+    UnprocessableEntity:
+      description: Request is syntactically valid but failed business validation
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: string
+          example:
+            errors:
+              - "login must not be blank"
+              - "password must be at least 6 characters"

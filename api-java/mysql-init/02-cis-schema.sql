@@ -1,0 +1,31 @@
+CREATE TABLE topics (
+    id VARCHAR(36) PRIMARY KEY,
+    title VARCHAR(150) NOT NULL,
+    description VARCHAR(1000),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by_user_id VARCHAR(36) NOT NULL,
+    CONSTRAINT fk_topics_user FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE ideas (
+    id VARCHAR(36)   PRIMARY KEY,
+    topic_id VARCHAR(36)   NOT NULL,
+    title VARCHAR(150)  NOT NULL,
+    description VARCHAR(2000),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by_user_id VARCHAR(36) NOT NULL,
+    CONSTRAINT fk_ideas_topic FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ideas_user  FOREIGN KEY (created_by_user_id) REFERENCES users(id)  ON DELETE CASCADE
+);
+
+CREATE TABLE votes (
+    id VARCHAR(36) PRIMARY KEY,
+    idea_id VARCHAR(36) NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_votes_idea FOREIGN KEY (idea_id) REFERENCES ideas(id) ON DELETE CASCADE,
+    CONSTRAINT fk_votes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT uq_votes_idea_user UNIQUE (idea_id, user_id)
+);

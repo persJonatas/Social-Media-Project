@@ -1,0 +1,26 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: cis_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: sd5
+      MYSQL_DATABASE: sd3
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./mysql-init:/docker-entrypoint-initdb.d
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:6.0
+    container_name: cis_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  mongodb_data:

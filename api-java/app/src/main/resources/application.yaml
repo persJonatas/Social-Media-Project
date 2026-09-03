@@ -1,0 +1,9 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/sd3
+
+api:
+  security:
+    token:
+      secret: ${JWT_SECRET:my-super-secret-key-12345}

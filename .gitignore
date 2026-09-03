@@ -1,0 +1,29 @@
+# Entregas locais e temporários
+entrega-pessoa-2/
+*.zip
+
+# Java / Maven
+**/target/
+**/.mvn/wrapper/maven-wrapper.jar
+
+# .NET / C#
+**/bin/
+**/obj/
+**/.vs/
+*.user
+*.suo
+
+# Node / Frontend
+**/node_modules/
+**/dist/
+*.env.local
+
+# Python
+**/venv/
+**/__pycache__/
+*.pyc
+
+# IDEs
+.idea/
+.vscode/
+*.iml
