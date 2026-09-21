@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="CisApi.Business/CisApi.Business.csproj" />
+  <Project Path="CisApi.Data/CisApi.Data.csproj" />
+  <Project Path="CisApi.Presentation/CisApi.Presentation.csproj" />
+  <Project Path="CisApi.Tests/CisApi.Tests.csproj" />
+  <Project Path="CisApi.TestClient/CisApi.TestClient.csproj" />
+</Solution>

@@ -27,3 +27,6 @@ entrega-pessoa-2/
 .idea/
 .vscode/
 *.iml
+
+# Logs locais de execução
+*.log

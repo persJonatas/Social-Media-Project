@@ -1,0 +1,603 @@
+openapi: 3.0.3
+info:
+  title: CIS API
+  description: >
+    RESTful API for the Collaborative Ideation Solution (CIS).
+    This API manages topics, ideas and votes, and integrates with the CIS Users API
+    (repo-users-api) for authentication and authorization.
+    All protected operations require a valid JWT token obtained from the Users API.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8081/cis-api/v1
+    description: Local development server
+
+tags:
+  - name: Topics
+    description: Topic CRUD operations (requires authentication)
+  - name: Ideas
+    description: Idea CRUD operations associated to topics and users (requires authentication)
+  - name: Votes
+    description: Vote registration and cancellation on ideas (requires authentication)
+
+paths:
+
+  /topics:
+    get:
+      tags:
+        - Topics
+      summary: Lists all topics
+      operationId: listTopics
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of topics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TopicResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Topics
+      summary: Creates a new topic
+      operationId: createTopic
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTopicRequest'
+            example:
+              title: "Melhorias no Onboarding"
+              description: "Ideias para tornar o processo de onboarding mais eficiente"
+      responses:
+        '201':
+          description: Topic created successfully
+          headers:
+            Location:
+              description: URL of the created topic
+              schema:
+                type: string
+                example: /cis-api/v1/topics/550e8400-e29b-41d4-a716-446655440000
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /topics/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Topic UUID
+        schema:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    get:
+      tags:
+        - Topics
+      summary: Gets a topic by ID
+      operationId: getTopicById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Topic found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Topics
+      summary: Updates a topic
+      operationId: updateTopic
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTopicRequest'
+            example:
+              title: "Melhorias no Onboarding - Revisado"
+              description: "Descrição atualizada do tópico"
+      responses:
+        '200':
+          description: Topic updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Topics
+      summary: Deletes a topic
+      operationId: deleteTopic
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Topic deleted successfully (no body)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /ideas:
+    get:
+      tags:
+        - Ideas
+      summary: Lists all ideas
+      operationId: listIdeas
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of ideas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IdeaResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Ideas
+      summary: Creates a new idea associated to a topic
+      operationId: createIdea
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIdeaRequest'
+            example:
+              title: "Gamificação no treinamento inicial"
+              description: "Utilizar elementos de jogos para engajar os novos colaboradores durante o onboarding"
+              topicId: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '201':
+          description: Idea created successfully
+          headers:
+            Location:
+              description: URL of the created idea
+              schema:
+                type: string
+                example: /cis-api/v1/ideas/660e9500-f30c-52e5-b827-557766551111
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdeaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /ideas/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Idea UUID
+        schema:
+          type: string
+          format: uuid
+          example: "660e9500-f30c-52e5-b827-557766551111"
+
+    get:
+      tags:
+        - Ideas
+      summary: Gets an idea by ID
+      operationId: getIdeaById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Idea found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdeaResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Ideas
+      summary: Updates an idea
+      operationId: updateIdea
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateIdeaRequest'
+            example:
+              title: "Gamificação no treinamento - Revisada"
+              description: "Descrição atualizada da ideia"
+      responses:
+        '200':
+          description: Idea updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdeaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Ideas
+      summary: Deletes an idea
+      operationId: deleteIdea
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Idea deleted successfully (no body)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /topics/{topicId}/ideas:
+    parameters:
+      - name: topicId
+        in: path
+        required: true
+        description: Topic UUID to filter ideas
+        schema:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    get:
+      tags:
+        - Ideas
+      summary: Lists all ideas belonging to a specific topic
+      operationId: listIdeasByTopic
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of ideas for the topic
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IdeaResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /ideas/{ideaId}/votes:
+    parameters:
+      - name: ideaId
+        in: path
+        required: true
+        description: Idea UUID to vote on
+        schema:
+          type: string
+          format: uuid
+          example: "660e9500-f30c-52e5-b827-557766551111"
+
+    post:
+      tags:
+        - Votes
+      summary: Registers a vote on an idea
+      description: >
+        The authenticated user casts a vote on the specified idea.
+        Business rule: a user may only cast one vote per idea. Attempting to vote again
+        on the same idea returns 409 Conflict.
+      operationId: castVote
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Vote registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoteResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+    delete:
+      tags:
+        - Votes
+      summary: Cancels the authenticated user's vote on an idea
+      description: >
+        Removes the vote previously cast by the authenticated user on the specified idea.
+        Returns 404 if the user has not voted on this idea.
+      operationId: cancelVote
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Vote cancelled successfully (no body)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Obtain a token via POST /auth/login on the CIS Users API.
+        Include it in all protected requests as:
+        Authorization: Bearer <token>.
+        The CIS API validates the token by calling POST /auth/validate on the Users API.
+
+  schemas:
+
+    CreateTopicRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 5
+          maxLength: 150
+          example: "Melhorias no Onboarding"
+        description:
+          type: string
+          maxLength: 1000
+          example: "Ideias para tornar o processo de onboarding mais eficiente"
+
+    UpdateTopicRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 5
+          maxLength: 150
+          example: "Melhorias no Onboarding - Revisado"
+        description:
+          type: string
+          maxLength: 1000
+          example: "Descrição atualizada do tópico"
+
+    TopicResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        title:
+          type: string
+          example: "Melhorias no Onboarding"
+        description:
+          type: string
+          example: "Ideias para tornar o processo de onboarding mais eficiente"
+        createdByUserId:
+          type: string
+          format: uuid
+          description: UUID of the user who created the topic
+          example: "770fa100-a41d-63f6-c938-668877662222"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-01-16T08:00:00Z"
+
+    CreateIdeaRequest:
+      type: object
+      required:
+        - title
+        - topicId
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 150
+          example: "Gamificação no treinamento inicial"
+        description:
+          type: string
+          maxLength: 2000
+          example: "Utilizar elementos de jogos para engajar os novos colaboradores"
+        topicId:
+          type: string
+          format: uuid
+          description: UUID of the topic this idea belongs to
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    UpdateIdeaRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 150
+          example: "Gamificação no treinamento - Revisada"
+        description:
+          type: string
+          maxLength: 2000
+          example: "Descrição atualizada da ideia"
+
+    IdeaResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "660e9500-f30c-52e5-b827-557766551111"
+        topicId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        title:
+          type: string
+          example: "Gamificação no treinamento inicial"
+        description:
+          type: string
+          example: "Utilizar elementos de jogos para engajar os novos colaboradores"
+        createdByUserId:
+          type: string
+          format: uuid
+          description: UUID of the user who created the idea
+          example: "770fa100-a41d-63f6-c938-668877662222"
+        voteCount:
+          type: integer
+          description: Total number of votes cast on this idea
+          example: 7
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-01-15T11:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-01-16T09:00:00Z"
+
+    VoteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "880gb200-b52e-74g7-d049-779988773333"
+        ideaId:
+          type: string
+          format: uuid
+          example: "660e9500-f30c-52e5-b827-557766551111"
+        userId:
+          type: string
+          format: uuid
+          description: UUID of the user who cast the vote
+          example: "770fa100-a41d-63f6-c938-668877662222"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-01-15T12:00:00Z"
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Topic not found"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
+
+  responses:
+
+    BadRequest:
+      description: Malformed request body or missing required fields
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Invalid request format"
+            timestamp: "2025-01-15T10:30:00Z"
+
+    Unauthorized:
+      description: JWT token missing, expired or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Unauthorized"
+            timestamp: "2025-01-15T10:30:00Z"
+
+    NotFound:
+      description: Requested resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Topic not found"
+            timestamp: "2025-01-15T10:30:00Z"
+
+    Conflict:
+      description: Business rule violation - e.g. user already voted on this idea
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "User has already voted on this idea"
+            timestamp: "2025-01-15T10:30:00Z"
+
+    UnprocessableEntity:
+      description: Request is syntactically valid but failed business validation
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: string
+          example:
+            errors:
+              - "title must not be blank"
+              - "topicId must be a valid UUID"
